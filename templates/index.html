@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trinetra | Advanced Static Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=2">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/static/js/app.js?v=2" defer></script>
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fa-solid fa-eye"></i>
+                <span class="nav-title">TRINETRA</span>
+                <span class="nav-subtitle">Static Forensic Analyzer</span>
+            </div>
+            <div class="nav-stats" id="nav-stats" style="display:none;">
+                <span class="stat-badge" id="files-scanned">0 Files Scanned</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Upload Zone -->
+        <div class="upload-section" id="drop-zone">
+            <div class="icon-stack">
+                <i class="fa-solid fa-file-shield main-icon"></i>
+            </div>
+            <h2>Drag & Drop File Analysis</h2>
+            <p>Supported: Executables, Documents, Archives, Images</p>
+            <input type="file" id="file-input" hidden>
+            <button class="btn-primary">Browse Files</button>
+        </div>
+
+        <!-- Loading State -->
+        <div class="loader-container" id="loader" style="display:none;">
+            <div class="progress-wrapper">
+                <div class="progress-circle">
+                    <svg class="progress-ring" width="120" height="120">
+                        <circle class="progress-ring-bg" cx="60" cy="60" r="54" />
+                        <circle class="progress-ring-fill" cx="60" cy="60" r="54" id="progress-circle" />
+                    </svg>
+                    <div class="progress-text">
+                        <span class="progress-percent" id="progress-percent">0%</span>
+                    </div>
+                </div>
+                <h3 class="progress-title">Analyzing File...</h3>
+                <p class="progress-step" id="progress-step">Initializing scan</p>
+                <div class="progress-steps-list">
+                    <div class="step-item" id="step-1"><i class="fa-solid fa-circle-notch fa-spin"></i> File
+                        identification</div>
+                    <div class="step-item pending" id="step-2"><i class="fa-solid fa-circle"></i> Hash calculation</div>
+                    <div class="step-item pending" id="step-3"><i class="fa-solid fa-circle"></i> String extraction
+                    </div>
+                    <div class="step-item pending" id="step-4"><i class="fa-solid fa-circle"></i> Signature verification
+                    </div>
+                    <div class="step-item pending" id="step-5"><i class="fa-solid fa-circle"></i> Pattern matching</div>
+                    <div class="step-item pending" id="step-6"><i class="fa-solid fa-circle"></i> Threat scoring</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Dashboard -->
+        <div class="results-dashboard" id="results" style="display:none;">
+
+            <!-- Summary Card -->
+            <div class="summary-card">
+                <div class="summary-left">
+                    <div class="threat-badge" id="threat-badge">
+                        <div class="threat-score-large" id="score-val">0</div>
+                        <div class="threat-label">Threat Score</div>
+                    </div>
+                </div>
+                <div class="summary-right">
+                    <h2 class="file-name" id="res-filename">-</h2>
+                    <p class="file-type" id="res-type">-</p>
+                    <span class="verdict-badge" id="res-verdict">ANALYZING</span>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="quick-stats">
+                <div class="stat-box">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <div class="stat-content">
+                        <div class="stat-label">Digital Signature</div>
+                        <div class="stat-value" id="sig-status">Checking...</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <i class="fa-solid fa-globe"></i>
+                    <div class="stat-content">
+                        <div class="stat-label">VirusTotal</div>
+                        <div class="stat-value" id="vt-status">Checking...</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <i class="fa-solid fa-dna"></i>
+                    <div class="stat-content">
+                        <div class="stat-label">YARA Matches</div>
+                        <div class="stat-value" id="yara-status">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="overview">Overview</button>
+                <button class="tab-btn" data-tab="technical">Technical Details</button>
+                <button class="tab-btn" data-tab="behavior">Behavior Analysis</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content active" id="tab-overview">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-header">
+                            <i class="fa-solid fa-fingerprint"></i>
+                            <h3>File Identity</h3>
+                        </div>
+                        <div class="info-body">
+                            <div class="info-row">
+                                <span class="label">MD5</span>
+                                <code class="hash" id="hash-md5">-</code>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">SHA256</span>
+                                <code class="hash" id="hash-sha256">-</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card" id="card-indicators">
+                        <div class="info-header">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <h3>Key Indicators</h3>
+                        </div>
+                        <div class="info-body" id="indicators-body">
+                            <p class="empty-msg">No suspicious indicators found</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-technical">
+                <div class="detail-section" id="section-pe" style="display:none;">
+                    <h3 class="section-title">Executable Analysis</h3>
+                    <div id="pe-details"></div>
+                </div>
+                <div class="detail-section" id="section-iocs">
+                    <h3 class="section-title">Network Indicators</h3>
+                    <div id="ioc-details"></div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-behavior">
+                <div id="behavior-content">
+                    <p class="empty-msg">No behavioral analysis available for this file type</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

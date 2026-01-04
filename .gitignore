@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Project Specific
+temp_uploads/
+*.log
+
+# Sensitive Data
+config.py
+.env
+api_keys.txt
+
+# Model Files (too large for git)
+data/model.pkl
