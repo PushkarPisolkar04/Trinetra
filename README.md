@@ -30,8 +30,7 @@ Whether you are a **Red Teamer**, **Blue Teamer**, or **Security Researcher**, T
 
 ## 📸 Screenshots
 
-![Trinetra Dashboard](https://i.imgur.com/your-screenshot-url.png)
-*(Replace with your actual screenshot)*
+![Trinetra Dashboard](./dashboard.png)
 
 ---
 
