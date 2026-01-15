@@ -179,12 +179,12 @@ def scan_file():
                 dangerous_count = len(pe_report.get("imports", [])) if (pe_report and "error" not in pe_report) else 0
                 strings_found = len(iocs["ips"]) + len(iocs["urls"])
                 
-                # Boost score if VirusTotal flags it
+                # --- SCORING WEIGHTS ---
+                # Boosts (Flags)
                 vt_boost = 0
                 if vt_report.get("available") and vt_report.get("malicious", 0) > 5:
                     vt_boost = 40
                 
-                # Boost score if YARA detects malware patterns
                 yara_boost = 0
                 if yara_report.get("available") and yara_report.get("matches_found", 0) > 0:
                     if yara_report.get("verdict") == "MALICIOUS":
@@ -192,41 +192,80 @@ def scan_file():
                     else:
                         yara_boost = 20
                 
-                # Boost score if APK is suspicious
                 apk_boost = 0
                 if apk_report and apk_report.get("verdict") == "SUSPICIOUS":
                     apk_boost = 30
 
-                ai_score = chitra.heuristic_judgment(entropy_score, dangerous_count, strings_found > 0)
-                final_score = min(100, ai_score + vt_boost + yara_boost + apk_boost)
-            except:
-                final_score = 50 # Heuristic fallback if AI fails
+                # Discounts (Trust Signals)
+                trust_discount = 0
+                # 1. VirusTotal Clean Signal (0 detections is a strong sign for known files)
+                if vt_report.get("available") and vt_report.get("malicious") == 0 and vt_report.get("total_vendors", 0) > 10:
+                    trust_discount += 40
+                
+                # 2. Digital Signature Signal (Legit files are usually signed)
+                if signature_info and signature_info.get("is_signed"):
+                    trust_discount += 30
 
-            emit_progress(8, 100, 'Analysis complete!')
+                # --- COMPUTE FINAL JUDGMENT ---
+                ai_score = chitra.heuristic_judgment(entropy_score, dangerous_count, strings_found > 0)
+                
+                # Calculate raw score
+                raw_score = ai_score + vt_boost + yara_boost + apk_boost
+                
+                # Apply trust discount if any
+                final_score = max(0, raw_score - trust_discount)
+                
+                # --- ADVANCED DIFFERENTIATION (The "Third Eye" Verdict) ---
+                is_signed = signature_info and signature_info.get("is_signed")
+                vt_clean = vt_report.get("available") and vt_report.get("malicious", 0) <= 1
+                is_installer = any("Installer" in d.get("rule_name", "") for d in yara_report.get("detections", []))
+                
+                final_verdict = "UNKNOWN"
+                if final_score < 20: final_verdict = "SAFE"
+                elif final_score < 60: final_verdict = "SUSPICIOUS"
+                else: final_verdict = "MALICIOUS"
+
+                # Override for Known Goodware (Official Apps)
+                if is_signed and vt_clean:
+                    if is_installer:
+                        final_verdict = "SAFE (Legitimate Installer)"
+                        final_score = min(final_score, 15)
+                    else:
+                        final_verdict = "SAFE (Signed Application)"
+                        final_score = min(final_score, 25)
+                
+                # Override for Stealthy Malware (Clean on VT but hits YARA critical)
+                if not vt_clean and yara_report.get("verdict") == "MALICIOUS":
+                    final_verdict = "MALICIOUS (Targeted Pattern Detected)"
+                    final_score = max(final_score, 85)
+
+                final_score = min(100, final_score)
+
+            except Exception as e:
+                final_score = 50 
+                final_verdict = "ANALYSIS_ERROR"
 
             # --- CONSTRUCT REPORT ---
             response = {
                 'scan_id': scan_id,
                 'filename': filename,
                 'file_type': file_type,
-                'hashes': hashes,
-                'iocs': iocs,
-                'pe_analysis': pe_report,
-                'signature_info': signature_info,
-                'virustotal': vt_report,
-                'yara_scan': yara_report,
-                'apk_analysis': apk_report,
-                'behavior_prediction': behavior_report,
-                'archive_analysis': archive_report,
-                'stego_analysis': stego_report,
-                'deobfuscation': maya_report,
-                'threat_score': final_score
+                'hashes': hashes if 'hashes' in locals() else {},
+                'iocs': iocs if 'iocs' in locals() else {"ips":[], "urls":[]},
+                'pe_analysis': pe_report if 'pe_report' in locals() else None,
+                'signature_info': signature_info if 'signature_info' in locals() else None,
+                'virustotal': vt_report if 'vt_report' in locals() else {"available": False},
+                'yara_scan': yara_report if 'yara_report' in locals() else {"available": False},
+                'apk_analysis': apk_report if 'apk_report' in locals() else None,
+                'behavior_prediction': behavior_report if 'behavior_report' in locals() else None,
+                'archive_analysis': archive_report if 'archive_report' in locals() else None,
+                'stego_analysis': stego_report if 'stego_report' in locals() else None,
+                'deobfuscation': maya_report if 'maya_report' in locals() else None,
+                'threat_score': final_score,
+                'verdict_label': final_verdict
             }
             
-            # Clean up progress queue
-            if scan_id in progress_queues:
-                del progress_queues[scan_id]
-            
+            emit_progress(8, 100, 'Analysis complete!')
             return jsonify(response)
 
         except Exception as e:

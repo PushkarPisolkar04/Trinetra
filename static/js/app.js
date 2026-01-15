@@ -168,17 +168,17 @@ function displayResults(data) {
     const threatBadge = document.getElementById('threat-badge');
 
     if (score < 20) {
-        verdict.textContent = "SAFE";
+        verdict.textContent = data.verdict_label || "SAFE";
         verdict.style.background = "#d4edda";
         verdict.style.color = "#155724";
         threatBadge.style.borderColor = "#27ae60";
     } else if (score < 60) {
-        verdict.textContent = "SUSPICIOUS";
+        verdict.textContent = data.verdict_label || "SUSPICIOUS";
         verdict.style.background = "#fff3cd";
         verdict.style.color = "#856404";
         threatBadge.style.borderColor = "#f1c40f";
     } else {
-        verdict.textContent = "MALICIOUS";
+        verdict.textContent = data.verdict_label || "MALICIOUS";
         verdict.style.background = "#f8d7da";
         verdict.style.color = "#721c24";
         threatBadge.style.borderColor = "#e74c3c";
@@ -187,7 +187,7 @@ function displayResults(data) {
     // Quick Stats
     if (data.signature_info) {
         const sigStatus = document.getElementById('sig-status');
-        if (data.signature_info.is_signed && data.signature_info.status === "Valid") {
+        if (data.signature_info.is_signed && (data.signature_info.status === "Valid" || data.signature_info.status.includes("Valid"))) {
             sigStatus.textContent = "✓ " + data.signature_info.publisher;
             sigStatus.style.color = "#16a34a";
         } else if (data.signature_info.is_signed === false) {
@@ -219,8 +219,8 @@ function displayResults(data) {
     }
 
     // Hashes
-    document.getElementById('hash-md5').textContent = data.hashes.md5 || "N/A";
-    document.getElementById('hash-sha256').textContent = data.hashes.sha256 || "N/A";
+    document.getElementById('hash-md5').textContent = (data.hashes && data.hashes.md5) ? data.hashes.md5 : "N/A";
+    document.getElementById('hash-sha256').textContent = (data.hashes && data.hashes.sha256) ? data.hashes.sha256 : "N/A";
 
     // Indicators (Overview Tab)
     const indicatorsBody = document.getElementById('indicators-body');
