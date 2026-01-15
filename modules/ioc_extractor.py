@@ -9,27 +9,31 @@ class Vani:
 
     def extract_strings(self, file_path, min_length=4):
         """
-        Extracts printable strings from a binary file using a memory-efficient chunked approach.
+        Extracts printable strings from a binary file.
+        Similar to the 'strings' command in Linux.
         """
-        found_strings = []
+        data = None
         try:
-            pattern = b"[ -~]{" + str(min_length).encode() + b",}"
             with open(file_path, "rb") as f:
-                # Read in chunks to avoid memory spikes
-                chunk_size = 10 * 1024 * 1024 # 10MB chunks
-                while True:
-                    chunk = f.read(chunk_size)
-                    if not chunk:
-                        break
-                    # Find all ASCII strings in the chunk
-                    for match in re.finditer(pattern, chunk):
-                        found_strings.append(match.group().decode('ascii', errors='ignore'))
-                    
-                    # Prevent found_strings from growing too large for RAM
-                    if len(found_strings) > 20000:
-                        break
+                data = f.read()
         except Exception as e:
-            pass
+            return []  # Return empty list if file can't be read
+        
+        # ASCII printable chars
+        result = ""
+        found_strings = []
+        for byte in data:
+            char = chr(byte)
+            if 32 <= byte <= 126: # Printable range
+                result += char
+            else:
+                if len(result) >= min_length:
+                    found_strings.append(result)
+                result = ""
+        
+        # Don't forget the last one
+        if len(result) >= min_length:
+            found_strings.append(result)
             
         return found_strings
 

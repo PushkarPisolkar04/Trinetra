@@ -23,7 +23,7 @@ from modules.apk_analyzer import APKAnalyzer
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'temp_uploads'
-app.config['MAX_CONTENT_LENGTH'] = 300 * 1024 * 1024 # Limit uploads to 300MB
+app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024 # 500MB Limit
 
 # Ensure temp directory exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -69,30 +69,23 @@ def scan_file():
             gk = Gatekeeper()
             file_type = gk.identify(file_path)
 
-            # Check file size for adaptive scanning
-            file_size = os.path.getsize(file_path)
-            is_light_scan = file_size > 100 * 1024 * 1024 # > 100MB is Light Scan
-            
-            # 2. Karma Calculator (Hashing)
-            emit_progress(1, 15, 'Calculating file hashes...')
-            hasher = Karma()
+            # 2. Karma (Hash)
+            emit_progress(2, 20, 'Calculating cryptographic hashes...')
+            karma = Karma()
             hashes = {}
             try:
-                hashes = hasher.calculate_hashes(file_path)
+                hashes = karma.calculate_hashes(file_path)
             except Exception as e:
                 hashes = {"error": f"Hash failed: {str(e)}"}
 
-            # 3. Vani (String/IOC Extractor)
-            iocs = {"ips": [], "urls": [], "emails": []}
-            if not is_light_scan:
-                emit_progress(2, 30, 'Extracting strings and hunting IOCs...')
-                try:
-                    extractor = Vani()
-                    iocs = extractor.hunt_iocs(file_path)
-                except:
-                    pass
-            else:
-                emit_progress(2, 30, 'Skipping IOC extraction (Adaptive Light Scan for large file)...')
+            # 3. Vani (Strings)
+            emit_progress(3, 35, 'Extracting strings and IOCs...')
+            iocs = {"ips": [], "urls": []}
+            try:
+                vani = Vani()
+                iocs = vani.hunt_iocs(file_path)
+            except:
+                pass
 
             # 4. PE Analysis (if Windows Executable)
             pe_report = None
@@ -269,8 +262,7 @@ def scan_file():
                 'stego_analysis': stego_report if 'stego_report' in locals() else None,
                 'deobfuscation': maya_report if 'maya_report' in locals() else None,
                 'threat_score': final_score,
-                'verdict_label': final_verdict,
-                'scan_mode': "Light (Optimized for RAM)" if is_light_scan else "Deep"
+                'verdict_label': final_verdict
             }
             
             emit_progress(8, 100, 'Analysis complete!')

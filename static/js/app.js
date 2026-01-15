@@ -221,7 +221,6 @@ function displayResults(data) {
     // Hashes
     document.getElementById('hash-md5').textContent = (data.hashes && data.hashes.md5) ? data.hashes.md5 : "N/A";
     document.getElementById('hash-sha256').textContent = (data.hashes && data.hashes.sha256) ? data.hashes.sha256 : "N/A";
-    document.getElementById('scan-mode').textContent = data.scan_mode || "Deep";
 
     // Indicators (Overview Tab)
     const indicatorsBody = document.getElementById('indicators-body');
