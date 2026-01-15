@@ -12,6 +12,11 @@ class Gatekeeper:
         if not os.path.exists(file_path):
             return "Error: File not found"
         
+        try:
+            # We read the start of the file to guess its type
+            mime_type = self.magic.from_file(file_path)
+            ext = os.path.splitext(file_path)[1].lower()
+            
             # Special check for Executables (MIME can vary between OS)
             if any(x in mime_type for x in ["dosexec", "portable-executable", "x-executable", "application/x-msdos-program"]):
                 return "application/x-dosexec"
