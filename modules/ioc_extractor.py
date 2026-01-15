@@ -9,18 +9,28 @@ class Vani:
 
     def extract_strings(self, file_path, min_length=4):
         """
-        Extracts printable strings from a binary file efficiently using regex.
+        Extracts printable strings from a binary file using regex for speed.
+        Scans only the first 20MB of large files to prevent timeouts.
         """
         try:
+            file_size = os.path.getsize(file_path)
+            # Limit scan to 20MB for memory/speed on free tiers
+            MAX_SCAN_SIZE = 20 * 1024 * 1024 
+            
             with open(file_path, "rb") as f:
-                # Use a regex that finds printable sequences directly (much faster than a loop)
-                # Matches printable ASCII characters (32 to 126)
-                data = f.read()
-                pattern = rb"[\x20-\x7E]{" + str(min_length).encode() + rb",}"
-                found_bytes = re.findall(pattern, data)
-                return [s.decode('utf-8', 'ignore') for s in found_bytes]
+                if file_size > MAX_SCAN_SIZE:
+                    data = f.read(MAX_SCAN_SIZE)
+                else:
+                    data = f.read()
+            
+            # Use regex for lightning-fast extraction of printable strings
+            # [ -~] matches ASCII printable range (32-126)
+            pattern = rb"[ -~]{" + str(min_length).encode() + rb",}"
+            found_strings = [s.decode('ascii', errors='ignore') for s in re.findall(pattern, data)]
+            
+            return found_strings
         except Exception as e:
-            return []  # Return empty list if file can't be read or processed
+            return []
 
     def hunt_iocs(self, file_path):
         """

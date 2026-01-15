@@ -26,12 +26,11 @@ class Kagaz:
                     # Compression Ratio Check (103% means normal, 10000% means bomb)
                     ratio = info.file_size / (info.compress_size + 1) # +1 to avoid div by zero
                     
-                    if len(report["files"]) < 100:
-                        report["files"].append({
-                            "name": info.filename,
-                            "size": info.file_size,
-                            "ratio": ratio
-                        })
+                    report["files"].append({
+                        "name": info.filename,
+                        "size": info.file_size,
+                        "ratio": ratio
+                    })
                     
                     if ratio > 100: # 100:1 compression is suspicious
                         report["zip_bomb_risk"] = True
