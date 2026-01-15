@@ -10,7 +10,7 @@
 
 ---
 
-### [🚀 Live Demo](https://trinetra-46yn.onrender.com) | [⭐ Star on GitHub](https://github.com/PushkarPisolkar04/Trinetra)
+### [🚀 Live Demo](https://trinetra-46yn.onrender.com)
 
 ---
 

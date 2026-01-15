@@ -26,10 +26,10 @@ class VirusTotalChecker:
         Looks up a file hash (MD5/SHA256) in VirusTotal database.
         Returns detection stats and vendor verdicts.
         """
-        if self.api_key == "YOUR_VT_API_KEY_HERE":
+        if self.api_key == "YOUR_VT_API_KEY_HERE" or not self.api_key:
             return {
                 "available": False,
-                "message": "VirusTotal API key not configured"
+                "message": "API Key Required (Set in Environment)"
             }
         
         try:

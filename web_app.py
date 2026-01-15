@@ -230,17 +230,20 @@ def scan_file():
             return jsonify(response)
 
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            # Clean up progress queue on error
+            if scan_id in progress_queues:
+                del progress_queues[scan_id]
+            return jsonify({"error": f"An error occurred during analysis: {str(e)}", "status": "failed"}), 500
 
         finally:
             # Clean up the file safely (ignore errors if file is locked on Windows)
             try:
-                if os.path.exists(file_path):
-                    # Force closing handles is hard in Python, so we just try multiple times
-                    # or hope the garbage collector ran.
+                if 'file_path' in locals() and os.path.exists(file_path):
                     os.remove(file_path)
             except:
                 pass
+
+    return jsonify({"error": "No file successfully uploaded"}), 400
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

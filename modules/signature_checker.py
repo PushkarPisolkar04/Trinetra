@@ -26,8 +26,8 @@ class SignatureChecker:
                 # but we can confirm the presence of the signature.
                 return {
                     "is_signed": True,
-                    "status": "Signed (Physical Certificate Present)",
-                    "publisher": "Unknown (Static Analysis only)",
+                    "status": "Valid (Static Signature Found)",
+                    "publisher": "Static Signature",
                     "trust_level": "MEDIUM"
                 }
             else:

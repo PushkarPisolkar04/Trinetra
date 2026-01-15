@@ -203,13 +203,14 @@ function displayResults(data) {
         document.getElementById('sig-status').style.color = "#64748b";
     }
 
-    if (data.virustotal && data.virustotal.available) {
+    if (data.virustotal) {
         const vtStatus = document.getElementById('vt-status');
-        if (data.virustotal.malicious !== undefined) {
+        if (data.virustotal.available && data.virustotal.malicious !== undefined) {
             vtStatus.textContent = `${data.virustotal.malicious}/${data.virustotal.total_vendors} flagged`;
             vtStatus.style.color = data.virustotal.malicious > 5 ? "#dc2626" : "#16a34a";
         } else {
-            vtStatus.textContent = data.virustotal.message || "Unknown";
+            vtStatus.textContent = data.virustotal.message || "Checking...";
+            vtStatus.style.color = "#64748b";
         }
     }
 
