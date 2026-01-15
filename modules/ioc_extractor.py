@@ -9,33 +9,18 @@ class Vani:
 
     def extract_strings(self, file_path, min_length=4):
         """
-        Extracts printable strings from a binary file.
-        Similar to the 'strings' command in Linux.
+        Extracts printable strings from a binary file efficiently using regex.
         """
-        data = None
         try:
             with open(file_path, "rb") as f:
+                # Use a regex that finds printable sequences directly (much faster than a loop)
+                # Matches printable ASCII characters (32 to 126)
                 data = f.read()
+                pattern = rb"[\x20-\x7E]{" + str(min_length).encode() + rb",}"
+                found_bytes = re.findall(pattern, data)
+                return [s.decode('utf-8', 'ignore') for s in found_bytes]
         except Exception as e:
-            return []  # Return empty list if file can't be read
-        
-        # ASCII printable chars
-        result = ""
-        found_strings = []
-        for byte in data:
-            char = chr(byte)
-            if 32 <= byte <= 126: # Printable range
-                result += char
-            else:
-                if len(result) >= min_length:
-                    found_strings.append(result)
-                result = ""
-        
-        # Don't forget the last one
-        if len(result) >= min_length:
-            found_strings.append(result)
-            
-        return found_strings
+            return []  # Return empty list if file can't be read or processed
 
     def hunt_iocs(self, file_path):
         """
