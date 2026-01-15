@@ -7,15 +7,19 @@ class Kundli:
 
     def calculate_entropy(self, data):
         """
-        Calculates the Shannon entropy of a byte array.
+        Calculates the Shannon entropy of a byte array efficiently.
         Returns a float between 0 and 8.
-        > 7.5 usually means packed/encrypted.
         """
         if not data:
             return 0
+        
+        import collections
+        counter = collections.Counter(data)
+        item_count = len(data)
         entropy = 0
-        for x in range(256):
-            p_x = float(data.count(x)) / len(data)
+        
+        for count in counter.values():
+            p_x = float(count) / item_count
             if p_x > 0:
                 entropy += - p_x * math.log(p_x, 2)
         return entropy
