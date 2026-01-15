@@ -43,6 +43,11 @@ class Kundli:
         try:
             # Check Sections for High Entropy (Packing)
             for section in pe.sections:
+                # OPTIMIZATION: Skip entropy for massive sections (>20MB) to avoid OOM
+                # Significant packing typically happens in smaller code sections.
+                if section.SizeOfRawData > 20 * 1024 * 1024:
+                    continue
+                    
                 entropy = self.calculate_entropy(section.get_data())
                 if entropy > 7.4:
                     report["suspicious_sections"].append({

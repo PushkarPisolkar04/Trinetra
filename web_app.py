@@ -23,7 +23,7 @@ from modules.apk_analyzer import APKAnalyzer
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'temp_uploads'
-app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024 # 500MB Limit
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 # Limit uploads to 100MB
 
 # Ensure temp directory exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):

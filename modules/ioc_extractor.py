@@ -9,28 +9,29 @@ class Vani:
 
     def extract_strings(self, file_path, min_length=4):
         """
-        Extracts printable strings from a binary file using regex for speed.
-        Scans only the first 20MB of large files to prevent timeouts.
+        Extracts printable strings from a binary file using a memory-efficient chunked approach.
         """
+        found_strings = []
         try:
-            file_size = os.path.getsize(file_path)
-            # Limit scan to 20MB for memory/speed on free tiers
-            MAX_SCAN_SIZE = 20 * 1024 * 1024 
-            
+            pattern = b"[ -~]{" + str(min_length).encode() + b",}"
             with open(file_path, "rb") as f:
-                if file_size > MAX_SCAN_SIZE:
-                    data = f.read(MAX_SCAN_SIZE)
-                else:
-                    data = f.read()
-            
-            # Use regex for lightning-fast extraction of printable strings
-            # [ -~] matches ASCII printable range (32-126)
-            pattern = rb"[ -~]{" + str(min_length).encode() + rb",}"
-            found_strings = [s.decode('ascii', errors='ignore') for s in re.findall(pattern, data)]
-            
-            return found_strings
+                # Read in chunks to avoid memory spikes
+                chunk_size = 10 * 1024 * 1024 # 10MB chunks
+                while True:
+                    chunk = f.read(chunk_size)
+                    if not chunk:
+                        break
+                    # Find all ASCII strings in the chunk
+                    for match in re.finditer(pattern, chunk):
+                        found_strings.append(match.group().decode('ascii', errors='ignore'))
+                    
+                    # Prevent found_strings from growing too large for RAM
+                    if len(found_strings) > 20000:
+                        break
         except Exception as e:
-            return []
+            pass
+            
+        return found_strings
 
     def hunt_iocs(self, file_path):
         """
