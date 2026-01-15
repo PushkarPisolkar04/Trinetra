@@ -11,4 +11,5 @@ rich
 requests
 flask
 joblib
+gunicorn
 yara-python

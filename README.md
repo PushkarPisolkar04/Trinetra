@@ -63,6 +63,23 @@ Whether you are a **Red Teamer**, **Blue Teamer**, or **Security Researcher**, T
 
 ---
 
+## ☁️ Free Deployment
+
+Trinetra is optimized for free hosting on **[Render](https://render.com/)** or **[Koyeb](https://www.koyeb.com/)** using Docker.
+
+1. **GitHub**: Push your code to a GitHub repository.
+2. **Render**: 
+   - Create a new **Web Service**.
+   - Connect your Trinetra repository.
+   - Select **Runtime: Docker**.
+   - Render will automatically use the `Dockerfile` to build and deploy.
+3. **Wait & Launch**: Once the build finish, you'll get a public `.onrender.com` URL!
+
+> [!NOTE]
+> Free tier services on Render spin down after 15 minutes of inactivity. The first scan after a break might take a minute to "wake up" the server.
+
+---
+
 ## ⚙️ Configuration
 
 Trinetra works out of the box, but you can superpowers it with API keys.

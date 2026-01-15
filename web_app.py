@@ -19,6 +19,7 @@ from modules.signature_checker import SignatureChecker
 from modules.virustotal_checker import VirusTotalChecker
 from modules.behavior_predictor import BehaviorPredictor
 from modules.yara_scanner import YaraScanner
+from modules.apk_analyzer import APKAnalyzer
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'temp_uploads'
@@ -107,7 +108,9 @@ def scan_file():
             # 8. VirusTotal Reputation Check
             emit_progress(5, 60, 'Checking VirusTotal reputation...')
             vt_checker = VirusTotalChecker()
-            vt_report = vt_checker.check_hash(hashes["sha256"])
+            vt_report = {"available": False, "message": "Hash calculation failed"}
+            if "sha256" in hashes:
+                vt_report = vt_checker.check_hash(hashes["sha256"])
             
             # 9. Behavior Prediction (for executables)
             behavior_predictor = BehaviorPredictor()
@@ -118,7 +121,14 @@ def scan_file():
             yara_scanner = YaraScanner()
             yara_report = yara_scanner.scan_file(file_path)
 
-            # 11. Chitragupta (AI Scoring)
+            # 11. APK Analysis (if Android Package)
+            apk_report = None
+            if "android.package-archive" in file_type:
+                emit_progress(6, 80, 'Analyzing APK manifest and permissions...')
+                apk_analyzer = APKAnalyzer()
+                apk_report = apk_analyzer.analyze(file_path)
+            
+            # 12. Chitragupta (AI Scoring)
             emit_progress(7, 90, 'Computing final threat score...')
             chitra = Chitragupta()
             entropy_score = pe_report["dosha_score"] if pe_report else 0
@@ -138,8 +148,13 @@ def scan_file():
                 else:
                     yara_boost = 20  # Suspicious patterns
             
+            # Boost score if APK is suspicious
+            apk_boost = 0
+            if apk_report and apk_report.get("verdict") == "SUSPICIOUS":
+                apk_boost = 30
+
             ai_score = chitra.heuristic_judgment(entropy_score, dangerous_count, strings_found > 0)
-            final_score = min(100, ai_score + vt_boost + yara_boost)
+            final_score = min(100, ai_score + vt_boost + yara_boost + apk_boost)
 
             emit_progress(8, 100, 'Analysis complete!')
 
@@ -154,6 +169,7 @@ def scan_file():
                 'signature_info': signature_info,
                 'virustotal': vt_report,
                 'yara_scan': yara_report,
+                'apk_analysis': apk_report,
                 'behavior_prediction': behavior_report,
                 'archive_analysis': archive_report,
                 'stego_analysis': stego_report,
@@ -167,10 +183,18 @@ def scan_file():
             
             return jsonify(response)
 
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
         finally:
-            # Clean up the file
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # Clean up the file safely (ignore errors if file is locked on Windows)
+            try:
+                if os.path.exists(file_path):
+                    # Force closing handles is hard in Python, so we just try multiple times
+                    # or hope the garbage collector ran.
+                    os.remove(file_path)
+            except:
+                pass
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

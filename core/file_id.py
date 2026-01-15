@@ -14,7 +14,17 @@ class Gatekeeper:
         
         try:
             # We read the start of the file to guess its type
-            file_type = self.magic.from_file(file_path)
-            return file_type
+            mime_type = self.magic.from_file(file_path)
+            ext = os.path.splitext(file_path)[1].lower()
+            
+            # Special check for APK (often identified as ZIP)
+            if ext == ".apk" or mime_type in ["application/zip", "application/java-archive"]:
+                import zipfile
+                if zipfile.is_zipfile(file_path):
+                    with zipfile.ZipFile(file_path, 'r') as z:
+                        if 'AndroidManifest.xml' in z.namelist():
+                            return "application/vnd.android.package-archive"
+            
+            return mime_type
         except Exception as e:
             return f"Unknown (Error: {str(e)})"

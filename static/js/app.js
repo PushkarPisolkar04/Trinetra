@@ -293,30 +293,65 @@ function displayResults(data) {
 
     // Behavior Analysis Tab
     const behaviorContent = document.getElementById('behavior-content');
-    if (data.behavior_prediction && data.behavior_prediction.details && data.behavior_prediction.details.length > 0) {
-        let html = '<div style="background:#fef2f2; padding:20px; border-radius:8px; border-left:3px solid #dc2626;">';
-        html += '<h4 style="margin:0 0 15px 0; color:#dc2626;">Predicted Runtime Behaviors:</h4>';
-        data.behavior_prediction.details.forEach(detail => {
-            html += `<div style="margin:8px 0; padding:10px; background:#fff; border-radius:4px;">${detail}</div>`;
-        });
-        html += '</div>';
+    let behaviorHTML = '';
 
-        if (data.yara_scan && data.yara_scan.matches_found > 0) {
-            html += '<div style="background:#fef2f2; padding:20px; border-radius:8px; border-left:3px solid #dc2626; margin-top:20px;">';
-            html += `<h4 style="margin:0 0 15px 0; color:#dc2626;">YARA Detections (${data.yara_scan.matches_found}):</h4>`;
-            data.yara_scan.detections.forEach(d => {
-                html += `<div style="margin:10px 0; padding:12px; background:#fff; border-radius:4px;">`;
-                html += `<div style="font-weight:600; color:#dc2626;">${d.rule_name}</div>`;
-                html += `<div style="font-size:0.9rem; color:#64748b; margin-top:4px;">${d.description}</div>`;
-                html += `</div>`;
+    // 1. Predicted Behaviors (from PE Analysis)
+    if (data.behavior_prediction && data.behavior_prediction.details && data.behavior_prediction.details.length > 0) {
+        behaviorHTML += '<div style="background:#fef2f2; padding:20px; border-radius:8px; border-left:3px solid #dc2626; margin-bottom:20px;">';
+        behaviorHTML += '<h4 style="margin:0 0 15px 0; color:#dc2626;"><i class="fa-solid fa-microchip"></i> Predicted Runtime Behaviors:</h4>';
+        data.behavior_prediction.details.forEach(detail => {
+            behaviorHTML += `<div style="margin:8px 0; padding:10px; background:#fff; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">${detail}</div>`;
+        });
+        behaviorHTML += '</div>';
+    }
+
+    // 2. APK Forensics (if applicable)
+    if (data.apk_analysis && data.apk_analysis.available) {
+        behaviorHTML += '<div style="background:#f0f9ff; padding:20px; border-radius:8px; border-left:3px solid #0ea5e9; margin-bottom:20px;">';
+        behaviorHTML += '<h4 style="margin:0 0 15px 0; color:#0369a1;"><i class="fa-brands fa-android"></i> APK Security Analysis:</h4>';
+
+        if (data.apk_analysis.permissions.length > 0) {
+            behaviorHTML += '<div style="margin-bottom:15px;"><strong>Permissions Found:</strong></div>';
+            behaviorHTML += '<div style="max-height:150px; overflow-y:auto; margin-bottom:15px;">';
+            data.apk_analysis.permissions.forEach(p => {
+                const isDangerous = p.includes("SMS") || p.includes("RECORD") || p.includes("SYSTEM_ALERT");
+                behaviorHTML += `<div class="code" style="margin:5px 0; ${isDangerous ? 'color:#dc2626; border-color:#fee2e2;' : ''}">${p}</div>`;
             });
-            html += '</div>';
+            behaviorHTML += '</div>';
         }
 
-        behaviorContent.innerHTML = html;
-    } else {
-        behaviorContent.innerHTML = '<p class="empty-msg">No behavioral analysis available for this file type</p>';
+        if (data.apk_analysis.suspicious_indicators.length > 0) {
+            behaviorHTML += '<div><strong>Suspicious Findings:</strong></div>';
+            data.apk_analysis.suspicious_indicators.forEach(ind => {
+                behaviorHTML += `<div style="margin:8px 0; padding:8px; background:#fff; border-radius:4px; color:#92400e; border:1px solid #fef3c7;">⚠️ ${ind}</div>`;
+            });
+        }
+        behaviorHTML += '</div>';
     }
+
+    // 3. YARA Detections (Decoupled from PE)
+    if (data.yara_scan && data.yara_scan.matches_found > 0) {
+        behaviorHTML += '<div style="background:#fff7ed; padding:20px; border-radius:8px; border-left:3px solid #f97316; margin-bottom:20px;">';
+        behaviorHTML += `<h4 style="margin:0 0 15px 0; color:#c2410c;"><i class="fa-solid fa-dna"></i> YARA Pattern Matches (${data.yara_scan.matches_found}):</h4>`;
+        data.yara_scan.detections.forEach(d => {
+            behaviorHTML += `<div style="margin:10px 0; padding:12px; background:#fff; border-radius:4px; border:1px solid #fed7aa;">`;
+            behaviorHTML += `<div style="font-weight:600; color:#ea580c;">${d.rule_name}</div>`;
+            behaviorHTML += `<div style="font-size:0.9rem; color:#64748b; margin-top:4px;">${d.description}</div>`;
+            if (d.matched_strings && d.matched_strings.length > 0) {
+                behaviorHTML += `<div style="font-size:0.8rem; color:#94a3b8; margin-top:8px; font-family:monospace;">Sample match: ${d.matched_strings[0].substring(0, 50)}...</div>`;
+            }
+            behaviorHTML += `</div>`;
+        });
+        behaviorHTML += '</div>';
+    }
+
+    // Fallback if no analysis
+    if (!behaviorHTML) {
+        behaviorHTML = '<p class="empty-msg">No behavioral or advanced analysis patterns found for this file.</p>';
+    }
+
+    behaviorContent.innerHTML = behaviorHTML;
+
 }
 
 // Helper function to switch tabs programmatically

@@ -34,3 +34,13 @@ api_keys.txt
 
 # Model Files (too large for git)
 data/model.pkl
+
+# Deployment Artifacts
+.vercel
+test_sample.apk
+test_manifest.txt
+walkthrough.md
+implementation_plan.md
+task.md
+.gemini/
+.agent/
